@@ -9,11 +9,16 @@ selfContractAddr = GetExecutingScriptHash()
 ONTLOCK_ENTRY = 'ONTLOCK-ENTRY-KEY'
 STAKE_PREFIX = 'LOCK-STAKE-KEY'
 UNSTAKE_PREFIX = 'LOCK-UNSTAKE-KEY'
+BUY_PREFIX = 'LOCK-BUY-KEY'
+BURNED_PREFIX = 'LOCK-BURNED-KEY'
 STORED_KEY = 'STORED-KEY'
 STAKE_DELAY = 45000
 STAKE_PRICE = 50
+BUY_PRICE = 500
 LOCK_HASH = 'ebe0ff4ee0524c2dabcd1331c3c842896bf40b97'
 
+base = 5
+multiplier = 5
 
 def Main(operation, args):
     if operation == 'put':
@@ -51,6 +56,14 @@ def Main(operation, args):
         Require(len(args) == 1)
         address = args[0]
         return getLOCKStaked(address)
+    elif operation == 'buy':
+        Require(len(args) == 2)
+        address = args[0]
+        amount = args[1]
+        return buy(address, amount)
+    elif operation == 'getBurned':
+        Require(len(args) == 0)
+        return getBurned()
     return False
 
 
@@ -146,7 +159,47 @@ def getLOCKStaked(address):
     amount = get_stake(address)
     return get_stake_size(amount)
 
+
+def buy(address, amount):
+    key = get_buy_key(address)
+    current = Get(ctx, key)
+    to_transfer = get_buy_size(amount)
+    Require(DynamicAppCall(LOCK_HASH, 'transfer', [address, selfContractAddr, to_transfer]))
+    Put(ctx, key, current + amount)
+    burn(to_transfer)
+    return True
+
+
+def getBurned():
+    key = get_burned_key()
+    return Get(ctx, key)
+
 # Helpers
+
+def burn(amount):
+    burnedKey = get_burned_key()
+    burned = Get(ctx, burnedKey)
+    Put(ctx, burnedKey, burned + amount)
+
+
+def get_burned_key():
+    return concat(BURNED_PREFIX) # pylint: disable=E0602
+
+
+def get_buy_size(amount):
+    factor = 100000000 # 10^8
+    return amount * factor * BUY_PRICE
+
+
+def get_buy_key(address):
+    key = concat(BUY_PREFIX, address) # pylint: disable=E0602
+    return key
+
+
+def get_bought(address):
+    key = get_buy_key(address)
+    return Get(ctx, key)
+
 
 def get_stake_size(amount):
     factor = 100000000 # 10^8
@@ -175,8 +228,8 @@ def set_stored_count(address, count):
 
 def get_allowance(address):
     currentStake = get_stake(address)
-    base = 5
-    allowance = base + currentStake * 5
+    currentBought = get_bought(address)
+    allowance = base + currentStake * multiplier + currentBought * multiplier
     return allowance
 
 
