@@ -4,6 +4,7 @@ ctx = GetContext()
 
 ONTLOCK_ENTRY = 'ONTlockDB-ENTRY-KEY'
 STAKE_PREFIX = 'LOCK-STAKE-KEY'
+STORED_KEY = 'STORED-KEY'
 
 def Main(operation, args):
     if operation == 'put':
@@ -54,14 +55,22 @@ def delete(address, website):
 
 
 def do_put(address, website, username, password):
-    storageKey = getStorageKey(address, website)
+    storageKey = get_pass_key(address, website)
+    currentData = Get(ctx, storageKey)
+    stored = get_stored_count(address)
+    if currentData is None:
+        stored += 1
+    allowance = get_allowance(address)
+
+    Require(stored <= allowance)
+    set_stored_count(address, stored)
     entry = {"username": username, "password": password}
     Put(ctx, storageKey, Serialize(entry))
     return True
 
 
 def do_get(address, website):
-    storageKey = getStorageKey(address, website)
+    storageKey = get_pass_key(address, website)
     storage = Get(ctx, storageKey)
     if storage is not None:
         return storage
@@ -69,17 +78,33 @@ def do_get(address, website):
 
 
 def do_delete(address, website):
-    storageKey = getStorageKey(address, website)
+    storageKey = get_pass_key(address, website)
+    currentData = Get(ctx, storageKey)
+    if currentData is None:
+        return True
+
+    stored = get_stored_count(address)
+    set_stored_count(address, stored - 1)
     Delete(ctx, storageKey)
     return True
 
 
 def stake(address, amount):
-    key = concat(STAKE_PREFIX, address) # pylint: disable=E0602
+    key = get_stake_key(address)
     Put(ctx, key, amount)
     return True
 
 # Helpers
+
+def get_stored_count(address):
+    key = concat(STORED_KEY, address) # pylint: disable=E0602
+    return Get(ctx, key)
+
+
+def set_stored_count(address, count):
+    key = concat(STORED_KEY, address) # pylint: disable=E0602
+    Put(ctx, key, count)
+
 
 def get_allowance(address):
     currentStake = get_stake(address)
@@ -89,11 +114,16 @@ def get_allowance(address):
 
 
 def get_stake(address):
-    key = concat(STAKE_PREFIX, address) # pylint: disable=E0602
+    key = get_stake_key(address)
     return Get(ctx, key)
 
 
-def getStorageKey(address, website):
+def get_stake_key(address):
+    key = concat(STAKE_PREFIX, address) # pylint: disable=E0602
+    return key
+
+
+def get_pass_key(address, website):
     '''
     Creates a unique storage key for the given address and website.
 
