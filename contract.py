@@ -1,4 +1,5 @@
 from ontology.interop.System.App import DynamicAppCall
+from ontology.interop.System.Blockchain import GetHeight
 from ontology.interop.System.ExecutionEngine import GetExecutingScriptHash
 from ontology.interop.System.Runtime import Log, CheckWitness, Serialize
 from ontology.interop.System.Storage import GetContext, Get, Put, Delete
@@ -7,8 +8,11 @@ selfContractAddr = GetExecutingScriptHash()
 
 ONTLOCK_ENTRY = 'ONTLOCK-ENTRY-KEY'
 STAKE_PREFIX = 'LOCK-STAKE-KEY'
+UNSTAKE_PREFIX = 'LOCK-UNSTAKE-KEY'
 STORED_KEY = 'STORED-KEY'
+STAKE_DELAY = 45000
 LOCK_HASH = 'ebe0ff4ee0524c2dabcd1331c3c842896bf40b97'
+
 
 def Main(operation, args):
     if operation == 'put':
@@ -103,10 +107,15 @@ def stake(address, amount):
     current = Get(ctx, key)
     Require(DynamicAppCall(LOCK_HASH, 'transfer', [address, selfContractAddr, amount]))
     Put(ctx, key, current + amount)
+    currentHeight = GetHeight()
+    set_unstake_height(address, currentHeight + STAKE_DELAY)
     return True
 
 
 def unstake(address, amount):
+    currentHeight = GetHeight()
+    unstakeHeight = get_unstake_height(address)
+    Require(currentHeight >= unstakeHeight)
     key = get_stake_key(address)
     current = Get(ctx, key)
     Require(current >= amount)
@@ -118,6 +127,16 @@ def unstake(address, amount):
     return True
 
 # Helpers
+
+def get_unstake_height(address):
+    key = get_unstake_key(address)
+    return Get(ctx, key)
+
+
+def set_unstake_height(address, height):
+    key = get_unstake_key(address)
+    Put(ctx, key, height)
+
 
 def get_stored_count(address):
     key = concat(STORED_KEY, address) # pylint: disable=E0602
@@ -143,6 +162,11 @@ def get_stake(address):
 
 def get_stake_key(address):
     key = concat(STAKE_PREFIX, address) # pylint: disable=E0602
+    return key
+
+
+def get_unstake_key(address):
+    key = concat(UNSTAKE_PREFIX, address) # pylint: disable=E0602
     return key
 
 
