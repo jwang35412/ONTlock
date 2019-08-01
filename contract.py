@@ -28,7 +28,12 @@ def Main(operation, args):
         Require(len(args) == 2)
         address = args[0]
         amount = args[1]
-        stake(address, amount)
+        return stake(address, amount)
+    elif operation == 'unstake':
+        Require(len(args) == 2)
+        address = args[0]
+        amount = args[1]
+        return unstake(address, amount)
     return False
 
 
@@ -91,7 +96,19 @@ def do_delete(address, website):
 
 def stake(address, amount):
     key = get_stake_key(address)
-    Put(ctx, key, amount)
+    current = Get(ctx, key)
+    Put(ctx, key, current + amount)
+    return True
+
+
+def unstake(address, amount):
+    key = get_stake_key(address)
+    current = Get(ctx, key)
+    Require(current >= amount)
+    if current == amount:
+        Delete(ctx, key)
+    else:
+        Put(ctx, key, current - amount)
     return True
 
 # Helpers
