@@ -1,10 +1,14 @@
+from ontology.interop.System.App import DynamicAppCall
+from ontology.interop.System.ExecutionEngine import GetExecutingScriptHash
 from ontology.interop.System.Runtime import Log, CheckWitness, Serialize
 from ontology.interop.System.Storage import GetContext, Get, Put, Delete
 ctx = GetContext()
+selfContractAddr = GetExecutingScriptHash()
 
 ONTLOCK_ENTRY = 'ONTLOCK-ENTRY-KEY'
 STAKE_PREFIX = 'LOCK-STAKE-KEY'
 STORED_KEY = 'STORED-KEY'
+LOCK_HASH = 'ebe0ff4ee0524c2dabcd1331c3c842896bf40b97'
 
 def Main(operation, args):
     if operation == 'put':
@@ -97,6 +101,7 @@ def do_delete(address, website):
 def stake(address, amount):
     key = get_stake_key(address)
     current = Get(ctx, key)
+    Require(DynamicAppCall(LOCK_HASH, 'transfer', [address, selfContractAddr, amount]))
     Put(ctx, key, current + amount)
     return True
 
@@ -105,6 +110,7 @@ def unstake(address, amount):
     key = get_stake_key(address)
     current = Get(ctx, key)
     Require(current >= amount)
+    Require(DynamicAppCall(LOCK_HASH, 'transfer', [selfContractAddr, address, amount]))
     if current == amount:
         Delete(ctx, key)
     else:
