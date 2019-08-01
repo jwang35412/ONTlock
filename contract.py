@@ -11,6 +11,7 @@ STAKE_PREFIX = 'LOCK-STAKE-KEY'
 UNSTAKE_PREFIX = 'LOCK-UNSTAKE-KEY'
 STORED_KEY = 'STORED-KEY'
 STAKE_DELAY = 45000
+STAKE_PRICE = 50
 LOCK_HASH = 'ebe0ff4ee0524c2dabcd1331c3c842896bf40b97'
 
 
@@ -42,6 +43,14 @@ def Main(operation, args):
         address = args[0]
         amount = args[1]
         return unstake(address, amount)
+    elif operation == 'getCurrentStake':
+        Require(len(args) == 1)
+        address = args[0]
+        return getCurrentStake(address)
+    elif operation == 'getLOCKStaked':
+        Require(len(args) == 1)
+        address = args[0]
+        return getLOCKStaked(address)
     return False
 
 
@@ -105,7 +114,8 @@ def do_delete(address, website):
 def stake(address, amount):
     key = get_stake_key(address)
     current = Get(ctx, key)
-    Require(DynamicAppCall(LOCK_HASH, 'transfer', [address, selfContractAddr, amount]))
+    to_transfer = get_stake_size(amount)
+    Require(DynamicAppCall(LOCK_HASH, 'transfer', [address, selfContractAddr, to_transfer]))
     Put(ctx, key, current + amount)
     currentHeight = GetHeight()
     set_unstake_height(address, currentHeight + STAKE_DELAY)
@@ -119,14 +129,29 @@ def unstake(address, amount):
     key = get_stake_key(address)
     current = Get(ctx, key)
     Require(current >= amount)
-    Require(DynamicAppCall(LOCK_HASH, 'transfer', [selfContractAddr, address, amount]))
+    to_transfer = get_stake_size(amount)
+    Require(DynamicAppCall(LOCK_HASH, 'transfer', [selfContractAddr, address, to_transfer]))
     if current == amount:
         Delete(ctx, key)
     else:
         Put(ctx, key, current - amount)
     return True
 
+
+def getCurrentStake(address):
+    return get_stake(address)
+
+
+def getLOCKStaked(address):
+    amount = get_stake(address)
+    return get_stake_size(amount)
+
 # Helpers
+
+def get_stake_size(amount):
+    factor = 100000000 # 10^8
+    return amount * factor * STAKE_PRICE
+
 
 def get_unstake_height(address):
     key = get_unstake_key(address)
