@@ -2,7 +2,7 @@ from ontology.interop.System.Runtime import Log, CheckWitness, Serialize
 from ontology.interop.System.Storage import GetContext, Get, Put, Delete
 ctx = GetContext()
 
-ONTLOCK_ENTRY = 'ONTlockDB-ENTRY-KEY'
+ONTLOCK_ENTRY = 'ONTLOCK-ENTRY-KEY'
 STAKE_PREFIX = 'LOCK-STAKE-KEY'
 STORED_KEY = 'STORED-KEY'
 
