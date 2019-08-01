@@ -3,7 +3,7 @@ from ontology.interop.System.Storage import GetContext, Get, Put, Delete
 ctx = GetContext()
 
 ONTLOCK_ENTRY = 'ONTlockDB-ENTRY-KEY'
-
+STAKE_PREFIX = 'LOCK-STAKE-KEY'
 
 def Main(operation, args):
     if operation == 'put':
@@ -23,6 +23,11 @@ def Main(operation, args):
         address = args[0]
         website = args[1]
         return delete(address, website)
+    elif operation == 'stake':
+        Require(len(args) == 2)
+        address = args[0]
+        amount = args[1]
+        stake(address, amount)
     return False
 
 
@@ -68,7 +73,25 @@ def do_delete(address, website):
     Delete(ctx, storageKey)
     return True
 
+
+def stake(address, amount):
+    key = concat(STAKE_PREFIX, address) # pylint: disable=E0602
+    Put(ctx, key, amount)
+    return True
+
 # Helpers
+
+def get_allowance(address):
+    currentStake = get_stake(address)
+    base = 5
+    allowance = base + currentStake * 5
+    return allowance
+
+
+def get_stake(address):
+    key = concat(STAKE_PREFIX, address) # pylint: disable=E0602
+    return Get(ctx, key)
+
 
 def getStorageKey(address, website):
     '''
