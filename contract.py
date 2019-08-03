@@ -19,6 +19,7 @@ LOCK_HASH = 'ebe0ff4ee0524c2dabcd1331c3c842896bf40b97'
 
 base = 5
 multiplier = 5
+size_limit = 33
 
 def Main(operation, args):
     if operation == 'put':
@@ -70,22 +71,22 @@ def Main(operation, args):
 def put(address, website, username, password):
     RequireIsAddress(address)
     RequireWitness(address)
-    RequireShorterThan(website, 65)
-    RequireShorterThan(username, 65)
-    RequireShorterThan(password, 65)
+    RequireShorterThan(website, size_limit)
+    RequireShorterThan(username, size_limit)
+    RequireShorterThan(password, size_limit)
     return do_put(address, website, username, password)
 
 
 def get(address, website):
     RequireIsAddress(address)
-    RequireShorterThan(website, 65)
+    RequireShorterThan(website, size_limit)
     return do_get(address, website)
 
 
 def delete(address, website):
     RequireIsAddress(address)
     RequireWitness(address)
-    RequireShorterThan(website, 65)
+    RequireShorterThan(website, size_limit)
     return do_delete(address, website)
 
 
