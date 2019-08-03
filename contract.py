@@ -182,18 +182,9 @@ def burn(amount):
     Put(ctx, burnedKey, burned + amount)
 
 
-def get_burned_key():
-    return concat(BURNED_PREFIX) # pylint: disable=E0602
-
-
 def get_buy_size(amount):
     factor = 100000000 # 10^8
     return amount * factor * BUY_PRICE
-
-
-def get_buy_key(address):
-    key = concat(BUY_PREFIX, address) # pylint: disable=E0602
-    return key
 
 
 def get_bought(address):
@@ -237,6 +228,7 @@ def get_stake(address):
     key = get_stake_key(address)
     return Get(ctx, key)
 
+# Keys
 
 def get_stake_key(address):
     key = concat(STAKE_PREFIX, address) # pylint: disable=E0602
@@ -248,9 +240,19 @@ def get_unstake_key(address):
     return key
 
 
+def get_buy_key(address):
+    key = concat(BUY_PREFIX, address) # pylint: disable=E0602
+    return key
+
+
+def get_burned_key():
+    return concat(BURNED_PREFIX) # pylint: disable=E0602
+
+
 def get_pass_key(address, website):
     return concat(concat(ONTLOCK_ENTRY, address), website) # pylint: disable=E0602
 
+# Require
 
 def RequireShorterThan(string, length):
     Require(len(string) < length, 'String is too long')
