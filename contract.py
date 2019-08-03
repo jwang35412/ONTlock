@@ -99,7 +99,7 @@ def do_put(address, website, username, password):
 
     Require(stored <= allowance)
     set_stored_count(address, stored)
-    entry = {"username": username, "password": password}
+    entry = {'username': username, 'password': password}
     Put(ctx, storageKey, Serialize(entry))
     return True
 
@@ -109,7 +109,7 @@ def do_get(address, website):
     storage = Get(ctx, storageKey)
     if storage is not None:
         return storage
-    return ""
+    return ''
 
 
 def do_delete(address, website):
@@ -265,7 +265,7 @@ def RequireShorterThan(string, length):
     :param string: The string to check.
     :param length: The length limit.
     '''
-    Require(len(string) < length, "String is too long")
+    Require(len(string) < length, 'String is too long')
 
 
 def RequireIsAddress(address):
@@ -274,7 +274,7 @@ def RequireIsAddress(address):
 
     :param address: The address to check.
     '''
-    Require(len(address) == 20, "Address has invalid length")
+    Require(len(address) == 20, 'Address has invalid length')
 
 
 def RequireWitness(address):
@@ -283,10 +283,10 @@ def RequireWitness(address):
 
     :param address: The address to check.
     '''
-    Require(CheckWitness(address), "Address is not witness")
+    Require(CheckWitness(address), 'Address is not witness')
 
 
-def Require(expr, message="There was an error"):
+def Require(expr, message='There was an error'):
     '''
     Raises an exception if the given expression is false.
 
