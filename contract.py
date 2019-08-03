@@ -61,6 +61,10 @@ def Main(operation, args):
         Require(len(args) == 1)
         address = args[0]
         return getLOCKStaked(address)
+    elif operation == 'getAllowance':
+        Require(len(args) == 1)
+        address = args[0]
+        return getAllowance(address)
     elif operation == 'buy':
         Require(len(args) == 2)
         address = args[0]
@@ -148,6 +152,9 @@ def do_delete(address, website):
 
 
 def stake(address, amount):
+    RequireIsAddress(address)
+    RequireWitness(address)
+
     key = get_stake_key(address)
     current = Get(ctx, key)
     to_transfer = get_stake_size(amount)
@@ -159,6 +166,9 @@ def stake(address, amount):
 
 
 def unstake(address, amount):
+    RequireIsAddress(address)
+    RequireWitness(address)
+
     currentHeight = GetHeight()
     unstakeHeight = get_unstake_height(address)
     Require(currentHeight >= unstakeHeight)
@@ -175,15 +185,25 @@ def unstake(address, amount):
 
 
 def getCurrentStake(address):
+    RequireIsAddress(address)
     return get_stake(address)
 
 
 def getLOCKStaked(address):
+    RequireIsAddress(address)
     amount = get_stake(address)
     return get_stake_size(amount)
 
 
+def getAllowance(address):
+    RequireIsAddress(address)
+    return get_allowance(address)
+
+
 def buy(address, amount):
+    RequireIsAddress(address)
+    RequireWitness(address)
+
     key = get_buy_key(address)
     current = Get(ctx, key)
     to_transfer = get_buy_size(amount)
