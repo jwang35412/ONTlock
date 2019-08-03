@@ -249,50 +249,22 @@ def get_unstake_key(address):
 
 
 def get_pass_key(address, website):
-    '''
-    Creates a unique storage key for the given address and website.
-
-    :param address: The user's address.
-    :param website: The website to store information for.
-    '''
     return concat(concat(ONTLOCK_ENTRY, address), website) # pylint: disable=E0602
 
 
 def RequireShorterThan(string, length):
-    '''
-    Raises an exception if the string's length exceeds the limit.
-
-    :param string: The string to check.
-    :param length: The length limit.
-    '''
     Require(len(string) < length, 'String is too long')
 
 
 def RequireIsAddress(address):
-    '''
-    Raises an exception if the given address is not the correct length.
-
-    :param address: The address to check.
-    '''
     Require(len(address) == 20, 'Address has invalid length')
 
 
 def RequireWitness(address):
-    '''
-    Raises an exception if the given address is not a witness.
-
-    :param address: The address to check.
-    '''
     Require(CheckWitness(address), 'Address is not witness')
 
 
 def Require(expr, message='There was an error'):
-    '''
-    Raises an exception if the given expression is false.
-
-    :param expr: The expression to evaluate.
-    :param message: The error message to log.
-    '''
     if not expr:
         Log(message)
         raise Exception(message)
