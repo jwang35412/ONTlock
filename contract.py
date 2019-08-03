@@ -40,6 +40,9 @@ def Main(operation, args):
         address = args[0]
         website = args[1]
         return delete(address, website)
+    elif operation == 'getAll':
+        Require(len(args) == 1)
+        return getAll(address)
     elif operation == 'stake':
         Require(len(args) == 2)
         address = args[0]
@@ -82,6 +85,13 @@ def get(address, website):
     RequireIsAddress(address)
     RequireShorterThan(website, size_limit)
     return do_get(address, website)
+
+
+def getAll(address):
+    RequireIsAddress(address)
+    key = concat(ONTLOCK_ENTRY, address) # pylint: disable=E0602
+    data = Get(ctx, key)
+    return data
 
 
 def delete(address, website):
