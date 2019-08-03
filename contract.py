@@ -1,7 +1,7 @@
 from ontology.interop.System.App import DynamicAppCall
 from ontology.interop.System.Blockchain import GetHeight
 from ontology.interop.System.ExecutionEngine import GetExecutingScriptHash
-from ontology.interop.System.Runtime import Log, CheckWitness, Serialize
+from ontology.interop.System.Runtime import Log, CheckWitness, Serialize, Deserialize
 from ontology.interop.System.Storage import GetContext, Get, Put, Delete
 ctx = GetContext()
 selfContractAddr = GetExecutingScriptHash()
@@ -12,6 +12,7 @@ UNSTAKE_PREFIX = '\x03'
 BUY_PREFIX = '\x04'
 BURNED_PREFIX = '\x05'
 STORED_KEY = '\x06'
+
 STAKE_DELAY = 45000
 STAKE_PRICE = 50
 BUY_PRICE = 500
@@ -91,36 +92,47 @@ def delete(address, website):
 
 
 def do_put(address, website, username, password):
-    storageKey = get_pass_key(address, website)
-    currentData = Get(ctx, storageKey)
-    stored = get_stored_count(address)
-    if currentData is None:
-        stored += 1
+    user_dict = get_global_dict(address)
+    storageKey = get_storage_key(address, website)
+    isStored = Get(ctx, storageKey)
+    storedCount = get_stored_count(address)
+    if isStored is False:
+        storedCount += 1
     allowance = get_allowance(address)
 
-    Require(stored <= allowance)
-    set_stored_count(address, stored)
+    Require(storedCount <= allowance)
+    set_stored_count(address, storedCount)
+
     entry = {'username': username, 'password': password}
-    Put(ctx, storageKey, Serialize(entry))
+    user_dict[website] = entry
+    set_global_dict(address, user_dict)
+
+    Put(ctx, storageKey, True)
     return True
 
 
 def do_get(address, website):
-    storageKey = get_pass_key(address, website)
-    storage = Get(ctx, storageKey)
-    if storage is not None:
-        return storage
+    user_dict = get_global_dict(address)
+    storageKey = get_storage_key(address, website)
+    isStored = Get(ctx, storageKey)
+    if isStored:
+        entry = user_dict[website]
+        return Serialize(entry)
     return ''
 
 
 def do_delete(address, website):
-    storageKey = get_pass_key(address, website)
-    currentData = Get(ctx, storageKey)
-    if currentData is None:
-        return True
+    storageKey = get_storage_key(address, website)
+    isStored = Get(ctx, storageKey)
+    if isStored is False:
+        return False
 
-    stored = get_stored_count(address)
-    set_stored_count(address, stored - 1)
+    user_dict = get_global_dict(address)
+    user_dict.remove(website)
+    set_global_dict(address, user_dict)
+
+    storedCount = get_stored_count(address)
+    set_stored_count(address, storedCount - 1)
     Delete(ctx, storageKey)
     return True
 
@@ -174,6 +186,20 @@ def buy(address, amount):
 def getBurned():
     key = get_burned_key()
     return Get(ctx, key)
+
+# Global Dict Storage
+
+def get_global_dict(address):
+    key = concat(ONTLOCK_ENTRY, address) # pylint: disable=E0602
+    data = Get(ctx, key)
+    if data is None:
+        return {}
+    return Deserialize(data)
+
+
+def set_global_dict(address, dct):
+    key = concat(ONTLOCK_ENTRY, address) # pylint: disable=E0602
+    Put(ctx, key, Serialize(dct))
 
 # Helpers
 
@@ -250,8 +276,8 @@ def get_burned_key():
     return concat(BURNED_PREFIX) # pylint: disable=E0602
 
 
-def get_pass_key(address, website):
-    return concat(concat(ONTLOCK_ENTRY, address), website) # pylint: disable=E0602
+def get_storage_key(address, website):
+    return concat(address, website) # pylint: disable=E0602
 
 # Require
 
