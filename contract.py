@@ -42,6 +42,7 @@ def Main(operation, args):
         return delete(address, website)
     elif operation == 'getAll':
         Require(len(args) == 1)
+        address = args[0]
         return getAll(address)
     elif operation == 'stake':
         Require(len(args) == 2)
