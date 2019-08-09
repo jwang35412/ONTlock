@@ -26,3 +26,17 @@ Scenario 3:
 - `stake` 500 LOCK, get 50 slots
 - `burn` 500 LOCK, get 5 slots
 - Total is 60 = 50 + 5 + 5
+
+### Methods
+
+ - `put(address, website, username, password)`
+ - `get(address, website)`
+ - `delete(address, website)`
+ - `getAll(address)`
+ - `stake(address, amount)`
+ - `unstake(address, amount)`
+ - `getCurrentStake(address)`
+ - `getLOCKStaked(address)`
+ - `getAllowance(address)`
+ - `buy(address, amount)`
+ - `getBurned()`
